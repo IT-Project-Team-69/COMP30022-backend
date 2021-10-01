@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-5=5kj7ah#*qo&6ym2y($zwp#l$fd0a9=$(^$*ch@6wb3i=dc8-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['team-69-backend.herokuapp.com']
+ALLOWED_HOSTS = ['team-69-backend.herokuapp.com', 'localhost', '127.0.0.1']
 
 
 LOGIN_REDIRECT_URL = '/crm/home'
@@ -50,8 +50,8 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware', ## For testing purposes
-    'crm.middle.DisableCSRFMiddleware', ## For testing purposes
+    # 'django.middleware.csrf.CsrfViewMiddleware', ## For testing purposes
+    'crm.middle.DisableCSRFMiddleware',  # For testing purposes
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -140,8 +140,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Where frontend and backend connect 
+# Where frontend and backend connect
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
 ]
+
