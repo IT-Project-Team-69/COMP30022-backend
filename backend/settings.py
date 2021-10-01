@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-5=5kj7ah#*qo&6ym2y($zwp#l$fd0a9=$(^$*ch@6wb3i=dc8-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['nameless-bayou-85406.herokuapp.com']
 
 
 LOGIN_REDIRECT_URL = '/crm/home'
@@ -143,5 +143,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Where frontend and backend connect 
 
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000'
+    'http://localhost:3000',
 ]
