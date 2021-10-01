@@ -15,11 +15,14 @@ def validate_file_size(file):
         raise ValidationError("File size exceeded 10MB")
     return file
 
+
 class UserProfile(models.Model):
     userAccount = models.OneToOneField(User, on_delete=models.CASCADE)
-    organisation = models.CharField(max_length=100, blank=True, null=True)
-    role = models.CharField(max_length=100, blank=True, null=True)
-    phoneNumber = models.CharField(max_length=100, blank=True, null=True)
+    organisation = models.CharField(
+        max_length=100, blank=True, null=True, default="")
+    role = models.CharField(max_length=100, blank=True, null=True, default="")
+    phoneNumber = models.CharField(
+        max_length=100, blank=True, null=True, default="")
     image = models.ImageField(
         upload_to='images/', height_field=None, width_field=None, null=True, blank=True)
 

@@ -1,7 +1,5 @@
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory
 from rest_framework import status
-from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
 
 
@@ -104,3 +102,64 @@ class EnterEmailTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = response.json()
         self.assertEqual(response['success'], False)
+
+
+class UserProfileTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="test@gmail.com",
+            password="Today12345",
+            first_name="Jane",
+            last_name="Doe")
+        self.user.save()
+        self.url = f'/crm/userprofiles/{self.user.id}/'
+
+    def test_get_user_details(self):
+        '''
+        Ensure user can view correct user details
+        '''
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], self.user.id)
+        self.assertEqual(response.data['organisation'], "")
+        self.assertEqual(response.data['role'], "")
+        self.assertEqual(response.data['phoneNumber'], "")
+        self.assertEqual(response.data['image'], None)
+
+    def test_update_user_details(self):
+        '''
+        Ensure user can update user details
+        '''
+        data = {
+            "organisation": "The University of Melbourne",
+            "role": "Computer Science Student"
+        }
+        response = self.client.patch(
+            self.url, data, format="json", content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['organisation'], data['organisation'])
+        self.assertEqual(response.data['role'], data['role'])
+
+    def test_adding_custom_profile_fields(self):
+        '''
+        Ensures user can add custom fields and field values to their profile
+        '''
+        url = f"{self.url}fields/"
+        data = {
+            "fields": [
+                {
+                    "label": "Preferred Name",
+                    "value": "Jane",
+                    "userAccount": self.user.id
+                },
+                {
+                    "label": "Pronouns",
+                    "value": "She/Her",
+                    "userAccount": self.user.id
+                }
+            ]
+        }
+        response = self.client.post(url, data, format="json", content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(response.data), len(data['fields']))
+        
