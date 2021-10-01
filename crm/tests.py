@@ -3,7 +3,6 @@ from rest_framework.test import APIRequestFactory
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
-import json
 
 
 class SignUpTest(TestCase):
@@ -65,6 +64,40 @@ class LogInTest(TestCase):
         data = {
             'username': self.logInData['username'],
             'password': 'IncorrectPassword'
+        }
+        response = self.client.post(
+            self.url, data, format="json", content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = response.json()
+        self.assertEqual(response['success'], False)
+
+
+class EnterEmailTest(TestCase):
+    def setUp(self):
+        self.url = '/crm/api-auth/checkemail/'
+        self.user = User.objects.create_user(
+            username="test@gmail.com", password="Today12345")
+        self.user.save()
+
+    def test_enter_existing_email(self):
+        '''
+        Ensures API returns true if email is associated with a user
+        '''
+        data = {
+            "email": self.user.username
+        }
+        response = self.client.post(
+            self.url, data, format="json", content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = response.json()
+        self.assertEqual(response['success'], True)
+
+    def test_enter_not_existing_email(self):
+        '''
+        Ensures API returns false if email is not associated with an existing user
+        '''
+        data = {
+            "email": "some.email@gmail.com"
         }
         response = self.client.post(
             self.url, data, format="json", content_type="application/json")
