@@ -64,6 +64,8 @@ class Contact(models.Model):
 class Group(models.Model):
     name = models.CharField(max_length=50)
     contacts = models.ManyToManyField(Contact, blank=True)
+    groupOwner = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class Event(models.Model):
