@@ -6,7 +6,7 @@ from rest_framework import permissions
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Permission
 from .models import CustomAnswer, CustomQuestion, Contact, Event, UserProfile, Group, UserProfileField
-from .serialisers import ContactSerializer, UserProfileSerializer, UserAccountSerializer, PermissionSerializer, GroupSerializer, UserProfileFieldSerializer
+from .serialisers import ContactSerializer, UserProfileSerializer, UserAccountSerializer, PermissionSerializer, GroupSerializer, UserProfileFieldSerializer, CustomQuestionSerializer, CustomAnswerSerializer # , CustomContactSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +22,47 @@ def index(request):
     return HttpResponse("Hello, world. You're at the index.")
 
 
+"""
+Home page user gets redirected to after login. Currently only displays information about the current user
+"""
+class HomeViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        user = self.request.user.userprofile
+        serializer = UserProfileSerializer(user,  context={'request': request})
+        return Response(serializer.data)
+
+
+# class CustomContact:
+#     def __init__(self, contact):
+#         self.contact = contact
+#         self.answers = CustomAnswer.objects.filter(contact=contact)
+        
+#     def create(self, validated_data):
+#         return CustomContact(**validated_data)
+    
+#     def __str__(self):
+#         return str(self.contact) + "   " + str(self.answers)
+
+# class CustomContactViewSet(viewsets.ViewSet):
+#     contacts = Contact.objects.all()
+#     queryset = [CustomContact(contact) for contact in contacts]
+#     serializer_class = CustomContactSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+    
+#     def list(self, request):
+#         user = self.request.user.userprofile
+#         contacts = Contact.objects.filter(contactOwner=user)
+#         customContacts = [CustomContact(contact) for contact in contacts]
+#         serializer = CustomContactSerializer(customContacts, many=True, context={'request': request})
+#         return Response(serializer.data)
+    
+#     def create(self, request):
+#         pass
+        
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all().order_by('whenAdded')
     serializer_class = ContactSerializer
@@ -30,7 +71,6 @@ class ContactViewSet(viewsets.ModelViewSet):
     """
     Only shows contacts that the user owns.
     """
-
     def list(self, request):
         user = self.request.user.userprofile
         queryset = Contact.objects.filter(contactOwner=user)
@@ -54,11 +94,28 @@ class ContactViewSet(viewsets.ModelViewSet):
     #     query = Contact.objects.get(pk=pk)
     #     serializer = ContactSerializer(query, context={'request': request})
     #     return Response(serializer.data)
+    
+    """
+    Gets all the custom answers for a specific contact.
+    """
+    @action(detail=True)
+    def get_answer(self, request, pk=None):
+        contact = Contact.objects.get(pk=pk)
+        
+        filled_questions = {answer.question for answer in CustomAnswer.objects.filter(contact = contact)}
+        blank_questions = CustomQuestion.objects.filter(user = request.user.userprofile)
+        for q in blank_questions:
+            if q not in filled_questions:
+                CustomAnswer.objects.create(question = q, contact=contact, data = "")
+        
+        # returns all answers
+        queryset = CustomAnswer.objects.filter(contact = contact)
+        serializer = CustomAnswerSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
     """
     Creates a new contact, owned by the current user.
     """
-
     def perform_create(self, serializer):
         serializer.save(contactOwner=self.request.user.userprofile)
 
@@ -83,6 +140,51 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     #permission_classes = [permissions.IsAuthenticated]
+
+
+
+"""
+API Endpoint to verify if a user email already exists.
+"""
+@csrf_exempt  # temporarily disable csrf token
+@api_view(['POST'])
+def check_email(request):
+    queryset = User.objects.values_list('username', flat=True)
+    body = json.loads(request.body)
+    exists = body['email'] in queryset
+    return JsonResponse({'success': exists})
+
+"""
+Login user.
+"""
+@csrf_exempt  # temporarily disable csrf token
+@api_view(['POST'])
+def login(request):
+    body = json.loads(request.body)
+    user = authenticate(username=body['username'], password=body['password'])
+    if user is not None:
+        return JsonResponse({'success': True, 'id': user.id, 'username': user.username})
+    else:
+        return JsonResponse({'success': False})
+
+"""
+User Profile custom fields
+"""
+@csrf_exempt  # temporarily disable csrf token
+@api_view(['GET', 'POST'])
+def get_profile_fields(request, id):
+    if request.method == 'GET':
+        fields = UserProfileField.objects.filter(userAccount=id)
+        serializer = UserProfileFieldSerializer(fields, many=True)
+        return Response(serializer.data)
+    
+    if request.method == 'POST':
+        UserProfileField.objects.filter(userAccount=id).delete()
+        serializer = UserProfileFieldSerializer(data=request.data['fields'], many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserAccountViewSet(viewsets.ModelViewSet):
@@ -134,56 +236,27 @@ class GroupViewSet(viewsets.ModelViewSet):
         serializer.save(groupOwner=self.request.user.userprofile)
 
 
-"""
-Home page user gets redirected to after login. Currently only displays information about the current user
-"""
 
 
-class HomeViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserProfileSerializer
+class CustomQuestionViewSet(viewsets.ModelViewSet):
+    queryset = CustomQuestion.objects.all()
+    serializer_class = CustomQuestionSerializer
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def list(self, request):
         user = self.request.user.userprofile
-        serializer = UserProfileSerializer(user,  context={'request': request})
-        return Response(serializer.data)
-
-
-@csrf_exempt  # temporarily disable csrf token
-@api_view(['POST'])
-def check_email(request):
-    queryset = User.objects.values_list('username', flat=True)
-    body = json.loads(request.body)
-    exists = body['email'] in queryset
-    return JsonResponse({'success': exists})
-
-
-@csrf_exempt  # temporarily disable csrf token
-@api_view(['POST'])
-def login(request):
-    body = json.loads(request.body)
-    user = authenticate(username=body['username'], password=body['password'])
-    if user is not None:
-        return JsonResponse({'success': True, 'id': user.id, 'username': user.username})
-    else:
-        return JsonResponse({'success': False})
-
-
-@csrf_exempt  # temporarily disable csrf token
-@api_view(['GET', 'POST'])
-def get_profile_fields(request, id):
-    if request.method == 'GET':
-        fields = UserProfileField.objects.filter(userAccount=id)
-        serializer = UserProfileFieldSerializer(fields, many=True)
+        queryset = CustomQuestion.objects.filter(user = user)
+        serializer = CustomQuestionSerializer(
+            queryset, many=True, context={'request': request})
         return Response(serializer.data)
     
-    if request.method == 'POST':
-        UserProfileField.objects.filter(userAccount=id).delete()
-        serializer = UserProfileFieldSerializer(data=request.data['fields'], many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    def perform_create(self, serializer):
+        serializer.save(user = self.request.user.userprofile)
+        
+        
+class CustomAnswerViewSet(viewsets.ModelViewSet):
+    queryset = CustomAnswer.objects.all()
+    serializer_class = CustomAnswerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    
