@@ -6,7 +6,7 @@ from rest_framework import permissions
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Permission
 from .models import CustomAnswer, CustomQuestion, Contact, Event, UserProfile, Group, UserProfileField
-from .serialisers import ContactSerializer, UserProfileSerializer, UserAccountSerializer, PermissionSerializer, GroupSerializer, UserProfileFieldSerializer, CustomQuestionSerializer, CustomAnswerSerializer, CustomContactSerializer
+from .serialisers import ContactSerializer, UserProfileSerializer, UserAccountSerializer, PermissionSerializer, GroupSerializer, UserProfileFieldSerializer, CustomQuestionSerializer, CustomAnswerSerializer # , CustomContactSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.views.decorators.csrf import csrf_exempt
@@ -36,28 +36,32 @@ class HomeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class CustomContact:
-    def __init__(self, contact):
-        self.contact = contact
-        self.answers = CustomAnswer.objects.filter(contact=contact)
+# class CustomContact:
+#     def __init__(self, contact):
+#         self.contact = contact
+#         self.answers = CustomAnswer.objects.filter(contact=contact)
         
-    def create(self, validated_data):
-        return CustomContact(**validated_data)
+#     def create(self, validated_data):
+#         return CustomContact(**validated_data)
     
-    def __str__(self):
-        return str(self.contact) + "   " + str(self.answers)
+#     def __str__(self):
+#         return str(self.contact) + "   " + str(self.answers)
 
-class CustomContactViewSet(viewsets.ViewSet):
-    contacts = Contact.objects.all()
-    queryset = [CustomContact(contact) for contact in contacts]
-    serializer_class = CustomContactSerializer
+# class CustomContactViewSet(viewsets.ViewSet):
+#     contacts = Contact.objects.all()
+#     queryset = [CustomContact(contact) for contact in contacts]
+#     serializer_class = CustomContactSerializer
+#     permission_classes = [permissions.IsAuthenticated]
     
-    def list(self, request):
-        user = self.request.user.userprofile
-        contacts = Contact.objects.filter(contactOwner=user)
-        customContacts = [CustomContact(contact) for contact in contacts]
-        serializer = CustomContactSerializer(customContacts, many=True, context={'request': request})
-        return Response(serializer.data)
+#     def list(self, request):
+#         user = self.request.user.userprofile
+#         contacts = Contact.objects.filter(contactOwner=user)
+#         customContacts = [CustomContact(contact) for contact in contacts]
+#         serializer = CustomContactSerializer(customContacts, many=True, context={'request': request})
+#         return Response(serializer.data)
+    
+#     def create(self, request):
+#         pass
         
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all().order_by('whenAdded')
@@ -90,6 +94,24 @@ class ContactViewSet(viewsets.ModelViewSet):
     #     query = Contact.objects.get(pk=pk)
     #     serializer = ContactSerializer(query, context={'request': request})
     #     return Response(serializer.data)
+    
+    """
+    Gets all the custom answers for a specific contact.
+    """
+    @action(detail=True)
+    def get_answer(self, request, pk=None):
+        contact = Contact.objects.get(pk=pk)
+        
+        filled_questions = {answer.question for answer in CustomAnswer.objects.filter(contact = contact)}
+        blank_questions = CustomQuestion.objects.filter(user = request.user.userprofile)
+        for q in blank_questions:
+            if q not in filled_questions:
+                CustomAnswer.objects.create(question = q, contact=contact, data = "")
+        
+        # returns all answers
+        queryset = CustomAnswer.objects.filter(contact = contact)
+        serializer = CustomAnswerSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
     """
     Creates a new contact, owned by the current user.

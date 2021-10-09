@@ -13,7 +13,7 @@ router.register(r'groups', views.GroupViewSet)
 router.register(r'home', views.HomeViewSet, 'home')
 router.register(r'question', views.CustomQuestionViewSet)
 router.register(r'answer', views.CustomAnswerViewSet)
-router.register(r'customcontact', views.CustomContactViewSet, 'customcontact')
+#router.register(r'customcontact', views.CustomContactViewSet, 'customcontact')
 
 urlpatterns = [
     path('', include(router.urls)),
