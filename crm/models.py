@@ -77,7 +77,7 @@ class Event(models.Model):
 
 class CustomQuestion(models.Model):
     question = models.CharField(max_length=50)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class CustomAnswer(models.Model):

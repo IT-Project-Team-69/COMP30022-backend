@@ -76,3 +76,8 @@ class UserProfileFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfileField
         fields = '__all__'
+
+
+# class CustomContactSerializer(serializers.Serializer):
+#     contact = ContactSerializer(required=False)
+#     answers = CustomAnswerSerializer(many = True, required=False)
