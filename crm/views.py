@@ -6,7 +6,7 @@ from rest_framework import permissions
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Permission
 from .models import CustomAnswer, CustomQuestion, Contact, Event, UserProfile, Group, UserProfileField
-from .serialisers import ContactSerializer, UserProfileSerializer, UserAccountSerializer, PermissionSerializer, GroupSerializer, UserProfileFieldSerializer
+from .serialisers import ContactSerializer, UserProfileSerializer, UserAccountSerializer, PermissionSerializer, GroupSerializer, UserProfileFieldSerializer, CustomQuestionSerializer, CustomAnswerSerializer, CustomContactSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.views.decorators.csrf import csrf_exempt
@@ -36,6 +36,29 @@ class HomeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class CustomContact:
+    def __init__(self, contact):
+        self.contact = contact
+        self.answers = CustomAnswer.objects.filter(contact=contact)
+        
+    def create(self, validated_data):
+        return CustomContact(**validated_data)
+    
+    def __str__(self):
+        return str(self.contact) + "   " + str(self.answers)
+
+class CustomContactViewSet(viewsets.ViewSet):
+    contacts = Contact.objects.all()
+    queryset = [CustomContact(contact) for contact in contacts]
+    serializer_class = CustomContactSerializer
+    
+    def list(self, request):
+        user = self.request.user.userprofile
+        contacts = Contact.objects.filter(contactOwner=user)
+        customContacts = [CustomContact(contact) for contact in contacts]
+        serializer = CustomContactSerializer(customContacts, many=True, context={'request': request})
+        return Response(serializer.data)
+        
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all().order_by('whenAdded')
     serializer_class = ContactSerializer
@@ -193,4 +216,25 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 
 
-
+class CustomQuestionViewSet(viewsets.ModelViewSet):
+    queryset = CustomQuestion.objects.all()
+    serializer_class = CustomQuestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def list(self, request):
+        user = self.request.user.userprofile
+        queryset = CustomQuestion.objects.filter(user = user)
+        serializer = CustomQuestionSerializer(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+    def perform_create(self, serializer):
+        serializer.save(user = self.request.user.userprofile)
+        
+        
+class CustomAnswerViewSet(viewsets.ModelViewSet):
+    queryset = CustomAnswer.objects.all()
+    serializer_class = CustomAnswerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    
