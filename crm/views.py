@@ -22,6 +22,20 @@ def index(request):
     return HttpResponse("Hello, world. You're at the index.")
 
 
+"""
+Home page user gets redirected to after login. Currently only displays information about the current user
+"""
+class HomeViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        user = self.request.user.userprofile
+        serializer = UserProfileSerializer(user,  context={'request': request})
+        return Response(serializer.data)
+
+
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all().order_by('whenAdded')
     serializer_class = ContactSerializer
@@ -30,7 +44,6 @@ class ContactViewSet(viewsets.ModelViewSet):
     """
     Only shows contacts that the user owns.
     """
-
     def list(self, request):
         user = self.request.user.userprofile
         queryset = Contact.objects.filter(contactOwner=user)
@@ -58,7 +71,6 @@ class ContactViewSet(viewsets.ModelViewSet):
     """
     Creates a new contact, owned by the current user.
     """
-
     def perform_create(self, serializer):
         serializer.save(contactOwner=self.request.user.userprofile)
 
@@ -83,6 +95,51 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     #permission_classes = [permissions.IsAuthenticated]
+
+
+
+"""
+API Endpoint to verify if a user email already exists.
+"""
+@csrf_exempt  # temporarily disable csrf token
+@api_view(['POST'])
+def check_email(request):
+    queryset = User.objects.values_list('username', flat=True)
+    body = json.loads(request.body)
+    exists = body['email'] in queryset
+    return JsonResponse({'success': exists})
+
+"""
+Login user.
+"""
+@csrf_exempt  # temporarily disable csrf token
+@api_view(['POST'])
+def login(request):
+    body = json.loads(request.body)
+    user = authenticate(username=body['username'], password=body['password'])
+    if user is not None:
+        return JsonResponse({'success': True, 'id': user.id, 'username': user.username})
+    else:
+        return JsonResponse({'success': False})
+
+"""
+User Profile custom fields
+"""
+@csrf_exempt  # temporarily disable csrf token
+@api_view(['GET', 'POST'])
+def get_profile_fields(request, id):
+    if request.method == 'GET':
+        fields = UserProfileField.objects.filter(userAccount=id)
+        serializer = UserProfileFieldSerializer(fields, many=True)
+        return Response(serializer.data)
+    
+    if request.method == 'POST':
+        UserProfileField.objects.filter(userAccount=id).delete()
+        serializer = UserProfileFieldSerializer(data=request.data['fields'], many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserAccountViewSet(viewsets.ModelViewSet):
@@ -134,56 +191,6 @@ class GroupViewSet(viewsets.ModelViewSet):
         serializer.save(groupOwner=self.request.user.userprofile)
 
 
-"""
-Home page user gets redirected to after login. Currently only displays information about the current user
-"""
 
-
-class HomeViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def list(self, request):
-        user = self.request.user.userprofile
-        serializer = UserProfileSerializer(user,  context={'request': request})
-        return Response(serializer.data)
-
-
-@csrf_exempt  # temporarily disable csrf token
-@api_view(['POST'])
-def check_email(request):
-    queryset = User.objects.values_list('username', flat=True)
-    body = json.loads(request.body)
-    exists = body['email'] in queryset
-    return JsonResponse({'success': exists})
-
-
-@csrf_exempt  # temporarily disable csrf token
-@api_view(['POST'])
-def login(request):
-    body = json.loads(request.body)
-    user = authenticate(username=body['username'], password=body['password'])
-    if user is not None:
-        return JsonResponse({'success': True, 'id': user.id, 'username': user.username})
-    else:
-        return JsonResponse({'success': False})
-
-
-@csrf_exempt  # temporarily disable csrf token
-@api_view(['GET', 'POST'])
-def get_profile_fields(request, id):
-    if request.method == 'GET':
-        fields = UserProfileField.objects.filter(userAccount=id)
-        serializer = UserProfileFieldSerializer(fields, many=True)
-        return Response(serializer.data)
-    
-    if request.method == 'POST':
-        UserProfileField.objects.filter(userAccount=id).delete()
-        serializer = UserProfileFieldSerializer(data=request.data['fields'], many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
