@@ -14,4 +14,10 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_LOCATION = "https://it-project.sgp1.digitaloceanspaces.com"
 
 DEFAULT_FILE_STORAGE = 'backend.cdn.backends.MediaRootS3Boto3Storage'
-STATIC_FILE_STORAGE = 'backend.cdn.backends.StaticRootS3Boto3Storage'
+STATICFILES_STORAGE = 'backend.cdn.backends.StaticRootS3Boto3Storage'
+
+STATIC_URL = '{}/{}/'.format(AWS_S3_ENDPOINT_URL, 'static')
+STATIC_ROOT = 'static/'
+
+MEDIA_URL = '{}/{}/'.format(AWS_S3_ENDPOINT_URL, 'media')
+MEDIA_ROOT = 'media/'

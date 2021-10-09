@@ -31,7 +31,11 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['team-69-backend.herokuapp.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'team-69-backend.herokuapp.com', 
+    'localhost', 
+    '127.0.0.1'
+]
 
 
 LOGIN_REDIRECT_URL = '/crm/home'
@@ -139,17 +143,17 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-from .cdn.conf import * # noqa
-
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, 'static')
 # ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # media url
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+from .cdn.conf import *  # noqa
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
