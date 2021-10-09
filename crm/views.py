@@ -106,14 +106,32 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def list(self, request):
+        user = self.request.user.userprofile
+        queryset = Group.objects.filter(groupOwner=user)
+        serializer = GroupSerializer(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+    # NOTE: For testing purposes only. Should add a permission modifier for only admins to access
+    @action(detail=False)
+    def all_groups(self, request):
+        queryset = Group.objects.all()
+        serializer = GroupSerializer(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
-    @action(detail=True,    methods=['post'], url_path='add_contact/(?P<contact_pk>[^/.]+)')
+    @action(detail=True, methods=['post'], url_path='add_contact/(?P<contact_pk>[^/.]+)')
     def add_contact(self, request, contact_pk, pk):
         group = self.get_object()
         contact = Contact.objects.get(id=contact_pk)
         group.contacts.add(contact)
         group.save()
         return Response()  # TODO: fix redirect
+    
+    def perform_create(self, serializer):
+        serializer.save(groupOwner=self.request.user.userprofile)
 
 
 """
