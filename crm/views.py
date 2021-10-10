@@ -14,6 +14,7 @@ from rest_framework.decorators import api_view
 import json
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 
 
 # Create your views here.
@@ -163,7 +164,8 @@ def login(request):
     body = json.loads(request.body)
     user = authenticate(username=body['username'], password=body['password'])
     if user is not None:
-        return JsonResponse({'success': True, 'id': user.id, 'username': user.username})
+        token, created = Token.objects.get_or_create(user=user)
+        return JsonResponse({'success': True, 'id': user.id, 'username': user.username, 'token': token.key })
     else:
         return JsonResponse({'success': False})
 
