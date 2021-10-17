@@ -230,8 +230,9 @@ class GroupViewSet(viewsets.ModelViewSet):
     def add_contact(self, request, contact_pk, pk):
         group = self.get_object()
         contact = Contact.objects.get(id=contact_pk)
-        group.contacts.add(contact)
-        group.save()
+        if contact.contactOwner == self.request.user.userprofile:
+            group.contacts.add(contact)
+            group.save()
         return Response()  # TODO: fix redirect
     
     def perform_create(self, serializer):
