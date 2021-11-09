@@ -102,18 +102,20 @@ class ContactViewSet(viewsets.ModelViewSet):
     @action(detail=True)
     def get_answer(self, request, pk=None):
         contact = Contact.objects.get(pk=pk)
-        
-        filled_questions = {answer.question for answer in CustomAnswer.objects.filter(contact = contact)}
-        blank_questions = CustomQuestion.objects.filter(user = request.user.userprofile)
-        for q in blank_questions:
-            if q not in filled_questions:
-                CustomAnswer.objects.create(question = q, contact=contact, data = "")
-        
-        # returns all answers
-        queryset = CustomAnswer.objects.filter(contact = contact)
-        serializer = CustomAnswerSerializer(queryset, many=True, context={'request': request})
-        return Response(serializer.data)
-
+        user = self.request.user.userprofile
+        if contact.contactOwner == user:
+            filled_questions = {answer.question for answer in CustomAnswer.objects.filter(contact = contact)}
+            blank_questions = CustomQuestion.objects.filter(user = request.user.userprofile)
+            for q in blank_questions:
+                if q not in filled_questions:
+                    CustomAnswer.objects.create(question = q, contact=contact, data = "")
+            
+            # returns all answers
+            queryset = CustomAnswer.objects.filter(contact = contact)
+            serializer = CustomAnswerSerializer(queryset, many=True, context={'request': request})
+            return Response(serializer.data)
+        return Response()
+    
     """
     Creates a new contact, owned by the current user.
     """
@@ -261,5 +263,12 @@ class CustomAnswerViewSet(viewsets.ModelViewSet):
     queryset = CustomAnswer.objects.all()
     serializer_class = CustomAnswerSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def list(self, request):
+        user = self.request.user.userprofile
+        queryset = CustomAnswer.objects.filter(question__user = user)
+        serializer = CustomAnswerSerializer(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
     
     
