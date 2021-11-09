@@ -153,7 +153,9 @@ def check_email(request):
     queryset = User.objects.values_list('username', flat=True)
     body = json.loads(request.body)
     exists = body['email'] in queryset
-    return JsonResponse({'success': exists})
+    response = JsonResponse({'success': exists})
+    response["Access-Control-Allow-Origin"] = "*"
+    return response
 
 """
 Login user.
