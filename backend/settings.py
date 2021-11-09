@@ -31,11 +31,12 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'team-69-backend.herokuapp.com', 
-    'localhost', 
-    '127.0.0.1'
-]
+# ALLOWED_HOSTS = [
+#     'team-69-backend.herokuapp.com', 
+#     'localhost', 
+#     '127.0.0.1'
+# ]
+ALLOWED_HOSTS = ['*']
 
 
 LOGIN_REDIRECT_URL = '/crm/home'
@@ -69,6 +70,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsPostCsrfMiddleware'
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -163,16 +165,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Where frontend and backend connect
+CORS_ORIGIN_ALLOW_ALL = True
 
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',
-    'https://team-69--prod.herokuapp.com'
-]
+# CORS_ORIGIN_WHITELIST = [
+#     'http://localhost:3000',
+#     'https://team-69--prod.herokuapp.com'
+# ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'https://team-69--prod.herokuapp.com'
-]
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:3000',
+#     'https://team-69--prod.herokuapp.com'
+# ]
 
 # https://it-project.sgp1.digitaloceanspaces.com
 
