@@ -169,6 +169,11 @@ CORS_ORIGIN_WHITELIST = [
     'https://team-69--prod.herokuapp.com'
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'https://team-69--prod.herokuapp.com'
+]
+
 # https://it-project.sgp1.digitaloceanspaces.com
 
 REST_FRAMEWORK = {
