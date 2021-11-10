@@ -156,7 +156,7 @@ def check_email(request):
     body = json.loads(request.body)
     exists = body['email'] in queryset
     response = JsonResponse({'success': exists})
-    response["Access-Control-Allow-Origin"] = 'http://team-69--prod.herokuapp.com/'
+    response["Access-Control-Allow-Origin"] = '*'
     return response
 
 
