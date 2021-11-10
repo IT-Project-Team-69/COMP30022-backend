@@ -159,6 +159,22 @@ def check_email(request):
     response["Access-Control-Allow-Origin"] = 'http://team-69--prod.herokuapp.com/'
     return response
 
+
+@api_view(['POST'])
+def change_password(request):
+    body = json.loads(request.body)
+    try:
+        user = authenticate(
+            username=body['username'], password=body['oldPassword'])
+        user.set_password(body['newPassword'])
+        user.save();
+        response = JsonResponse({'success': True})
+        response["Access-Control-Allow-Origin"] = 'http://team-69--prod.herokuapp.com/'
+        return response
+    except:
+        return JsonResponse({'success': False})
+
+
 """
 Login user.
 """
