@@ -58,7 +58,9 @@ class Contact(models.Model):
     starred = models.BooleanField(_("Star"), default=False)
     contactOwner = models.ForeignKey(
         UserProfile, on_delete=models.CASCADE, blank=True, null=True)
-    # TODO: ADD LINKEDIN LINK, PROFILE PICTURE
+    image = models.ImageField(
+        upload_to=f'images/{UserProfile.id}/', height_field=None, width_field=None, null=True, blank=True)
+    # random line because it's not pushing
 
 
 class Group(models.Model):
@@ -77,7 +79,8 @@ class Event(models.Model):
 
 class CustomQuestion(models.Model):
     question = models.CharField(max_length=50)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class CustomAnswer(models.Model):
